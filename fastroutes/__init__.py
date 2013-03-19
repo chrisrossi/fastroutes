@@ -17,21 +17,25 @@ class Routes(object):
         state = []
         node = self.tree
         match = {}
-        while elements:
-            element = elements.pop(0)
+        while True:
+            element = elements[0]
             children = list(node.children)
             while children:
                 pattern, childnode = children.pop(0)
                 if pattern_matches(pattern, element, match):
-                    if elements:
+                    if len(elements) > 1:
                         state.append(
                             (FakeNode(children), list(elements), match.copy()))
                         node = childnode
+                        elements = elements[1:]
                         break
                     if childnode.route:
                         yield {'route': childnode.route, 'match': match.copy()}
-            if state:
-                node, elements, match = state.pop(-1)
+            else:
+                if state:
+                    node, elements, match = state.pop(-1)
+                else:
+                    break
 
 
 def pattern_matches(pattern, element, match):
@@ -71,7 +75,7 @@ class RouteNode(object):
             node = RouteNode()
             self.children.append((pattern, node))
         if elements:
-            return self.get_register(elements)
+            return node.get_register(elements)
         return node
 
     def get(self, name):
@@ -84,4 +88,4 @@ class RouteNode(object):
 class FakeNode(object):
 
     def __init__(self, children):
-        self.children = children
+        self.children = list(children)
